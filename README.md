@@ -1,6 +1,6 @@
 # sscor-MCD
 Code to reproduce the figures of paper "Finite-sample calibration of robust covariance estimation under heavy tails"
-
+DOMENICO
 > **Note:** This repository contains code and instructions for replicating the results of a paper currently under peer review. Author information is intentionally omitted.
 
 ## Abstract
