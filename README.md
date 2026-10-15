@@ -100,3 +100,31 @@ Key expected output:
 - A timestamped folder under out_s1s2s3/interpolation_YYYY-mm-dd_HHMMSS/
 - Separate subfolders for delta_interpolation and RD_interpolation. In each of these subfolder the script generates CSV summary tables, a .mat   file with the processed analysis and optional plot files if producePlots = true
 
+## s03_application.m
+
+This demonstrates the application of the finite-sample MCD-t calibration to a real dataset, Grass, and compares the asymptotic cutoff with the calibrated cutoff.
+
+Main inputs:
+- datasets/Grass.prn (or, if datatype = 2, an independent synthetic Student-t sample generated inside the script)
+- Interpolation outputs from s02, specifically:
+    delta_interpolation/MCDt_delta_interpolation_analysis.mat
+    RD_interpolation/MCDt_RD_interpolation_analysis.mat
+- Model settings fixed in the script for the Grass case are: 
+-- nu0 = 8
+-- alpha0 = 0.50
+-- conflev0 = 0.95
+
+The script:
+- Loads the data.
+- Computes the raw MCD robust distances.
+- Loads the calibration factors from the interpolation results.
+- Compares asymptotic vs calibrated outlier classifications.
+- Produces diagnostic plots.
+
+Expected output is a robust-distance index plot showing:
+- regular observations,
+- calibrated outliers,
+- borderline observations flagged only by the asymptotic cutoff.
+- A scatterplot matrix (spmplot) with the same grouping.
+The output is primarily visual but the MATLAB Command Output reports relevant statistics.
+
