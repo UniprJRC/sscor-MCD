@@ -81,4 +81,22 @@ Optional diagnostics:
 - BiasDet_table.mat
 - PNG, EPS, and FIG diagnostic plots
 
+## s02_mcdt_interpolation_analysis.m
+
+This script takes as input the calibration output produced by s01_mcdt_finite_sample_calibration.m and produces in output a set of interpolation summaries and lookup tables for the quantities studied in the paper.
+
+Required input files from the s01 results folder:
+- BiasDet_table_mean_root.csv for the Section 5.4 analysis of delta_hat = 1 / BiasDet.
+- mcd_heavytails_RD_calibration.csv for the Section 6 analysis of kappa_RD^delta.
+- The script assumes the s01 CSV files already exist in out_s1s2s3/<calibration_folder>/
+
+The script:
+- Loads the s01 calibration tables.
+- Computes interpolation comparisons for each target quantity.
+- Evaluates three methods: scattered linear, 2D LOESS, and PCHIP-in-n + linear-in-alpha0.
+- Saves dense lookup tables, summary tables, and optional diagnostic plots.
+
+Key expected output:
+- A timestamped folder under out_s1s2s3/interpolation_YYYY-mm-dd_HHMMSS/
+- Separate subfolders for delta_interpolation and RD_interpolation. In each of these subfolder the script generates CSV summary tables, a .mat   file with the processed analysis and optional plot files if producePlots = true
 
