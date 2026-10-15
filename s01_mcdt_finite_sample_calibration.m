@@ -2,62 +2,69 @@
 % s01_mcdt_finite_sample_calibration.m
 % ========================================================================
 %
-% SIMULATION of MCD Robust-Distance Calibration Under Multivariate t
+% Monte Carlo calibration of MCD robust-distance cutoffs under multivariate t
 %
-% Purpose: 
-% Reproduces the Monte Carlo calibration results reported in the paper
-% "Finite-sample calibration of robust covariance estimation under heavy tails"
+% Purpose:
+%   Reproduces the finite-sample calibration workflow for the MCD-t
+%   estimator described in the paper on robust covariance estimation under
+%   heavy tails.
 %
 % Workflow:
-%   1. Estimate determinant-bias correction factors.
-%   2. Run split-sample Monte Carlo simulations.
-%   3. Estimate empirical robust-distance cutoffs.
-%   4. Evaluate empirical test size on an independent evaluation sample.
-%   5. Save calibration tables and diagnostic figures.
+%   1. Run a sanity check on the MCD robust-distance cutoff.
+%   2. Estimate determinant-bias correction factors.
+%   3. Run split-sample Monte Carlo simulations over the (n, p, nu, alpha0) grid.
+%   4. Compute asymptotic and calibrated robust-distance cutoffs.
+%   5. Evaluate empirical outlier-test size on an independent evaluation half.
+%   6. Save the calibration database and, optionally, diagnostic figures.
 %
-% Main Input:
-%   - Grid: n_vec, p_vec, nu_vec, alpha0_vec
-%   - B: Monte Carlo replications (even; split into calibration/evaluation)
+% Main inputs:
+%   - Simulation grid: n_vec, p_vec, nu_vec, alpha0_vec
+%   - Monte Carlo replications: B (must be even; split into calibration and
+%     evaluation halves)
+%   - Confidence level: conflev
+%   - Quantile method for calibration cutoffs: q_method
+%   - Determinant-bias workflow: biasDetMode
 %
-% Main output:
-%   - CalibrationDatabase (CSV/MAT), diagnostic figures
-%     mcdt_calibration.csv
+% Important note:
+%   The script currently applies the quick-test overrides defined in
+%   quickTest, so the default execution is a reduced grid intended for fast
+%   checks. Disable or clear quickTest to run the full simulation grid.
+%
+% Main outputs:
+%   - mcd_heavytails_RD_calibration_results.mat
+%   - mcd_heavytails_RD_calibration.csv
+%   - BiasDet_table.mat
+%   - mcd_heavytails_RD_calibration_diagnostics.csv (if diagnostics are enabled)
+%   - optional diagnostic figures (if options.saveDiagnostics = true)
 %
 % Requirements:
 %   - MATLAB
 %   - FSDA toolbox
-%   - Statistics Toolbox
-%
-% See README.md for the simulation design and parameter definitions.
+%   - Statistics and Machine Learning Toolbox
 %
 % Notes:
-%   - Detailed algorithmic description and derivations moved to README.md.
-%   - Dependencies: mcd, msdcutoff (and Statistics Toolbox for chi2rnd if used).
-%   - Split-sample design:
-%       B total replications are generated and split into two equal halves:
-%        - calibration replications:  1:B_cal   (used to compute calibration cutoffs)
-%        - evaluation replications:   B_cal+1:B (used only to evaluate empirical sizes)
-%       All calibration quantiles (pooled or per-rep) are computed from the
-%       calibration half only. Evaluation of empirical size is always done on
-%       the independent evaluation half to avoid circularity.
+%   - The results are written under out_s1s2s3/calibration_YYYY-mm-dd_HHMMSS/
+%   - The script uses a split-sample design:
+%       calibration replications are used to compute calibration cutoffs,
+%       evaluation replications are used only to estimate empirical size.
+%   - The script currently saves the raw database by default, but saves
+%     diagnostic plots only if options.saveDiagnostics is set to true.
 %
 % Full call chain:
 %   s01_mcdt_finite_sample_calibration.m
-%       -> estimateBiasDetFactors.m
-%           -> loadBiasDetTable.m
-%       -> buildBiasDetFun.m
-%           -> buildBiasDetFun_exact
-%               -> lookupBiasDetExact
-%       -> runPairedFullGrid.m
-%           -> runPairedSimConfig.m
-%               -> onePairedReplication.m
-%                   -> verifyCorrectedMD.m
-%       -> resultColumnsToTable.m
-%       -> writeResultRow.m
-%       -> initialiseResultColumns.m
-%       -> plotKappaRDDiagnostics.m
-%       -> plotDeterminantBiasDiagnostics.m
-%       -> plotSizeDiagnostics.m
+%       -> estimateBiasDetFactors
+%       -> buildBiasDetFun
+%       -> runPairedFullGrid
+%           -> runPairedSimConfig
+%               -> onePairedReplication
+%                   -> verifyCorrectedMD
+%       -> addMethodColumn
+%       -> plotKappaRDDiagnostics
+%       -> plotDeterminantBiasDiagnostics
+%       -> plotSizeDiagnostics
+%
+% ========================================================================
+
 
 
 clear; clc; close all   % cleaning
