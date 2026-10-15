@@ -41,7 +41,8 @@ information document. These codes can be used in two modalities:
 ### To prepare your local environment 
 1. Clone this repository: `git clone https://github.com/UniprJRC/sscor-MCD.git`
 2. Navigate to the repository directory: `cd <your path to tdist-MCD>
-3. Install FSDA from "Install App" of the standard MATLAB distribution 
+3. Install FSDA from "Install App" of the standard MATLAB distribution
+4. Project folders src_srep, src_core, src_plots must be on the path 
 
 ### To use MATLAB Online
 The free "MATLAB Online" platform can be used up to 20 hours a month, 
@@ -49,5 +50,35 @@ which are sufficient to replicate all results except the simulation
 of the KS and AD quantiles. For this, it is sufficient to click on the
 link in the table below. Once you are in the MATLAB cloud environment,
 go under the "Add Ons section" of the "Home tab" and install FSDA. 
+
+### SCRIPTS DESCRIPTION
+
+## s01_mcdt_finite_sample_calibration.m
+
+This is the simulation of MCD Robust-Distance Calibration Under Multivariate-t.
+The purpose is to reproduce the Monte Carlo calibration results reported in the paper.
+
+The script requires the user to specify:
+- Simulation grid: n_vec, p_vec, nu_vec, alpha0_vec
+- Monte Carlo size: B must be even, because it is split into calibration and evaluation halves
+- Confidence level: conflev
+- Bias-determinant workflow: biasDetMode (estimate-and-apply for a full run)
+- Quantile method: q_method
+
+The script:
+- Estimates or loads determinant-bias correction factors.
+- Runs the split-sample Monte Carlo simulation over the full (n, p, nu, alpha0) grid.
+- Builds the final calibration table.
+- Saves results and, if enabled, diagnostic plots.
+
+Key expected output:
+- A timestamped results folder under out_s1s2s3/calibration_YYYY-mm-dd_HHMMSS/
+- mcd_heavytails_RD_calibration_results.mat
+- mcd_heavytails_RD_calibration.csv
+
+Optional diagnostics:
+- mcd_heavytails_RD_calibration_diagnostics.csv
+- BiasDet_table.mat
+- PNG, EPS, and FIG diagnostic plots
 
 
