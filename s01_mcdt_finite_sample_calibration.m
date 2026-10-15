@@ -10,12 +10,11 @@
 %   heavy tails.
 %
 % Workflow:
-%   1. Run a sanity check on the MCD robust-distance cutoff.
-%   2. Estimate determinant-bias correction factors.
-%   3. Run split-sample Monte Carlo simulations over the (n, p, nu, alpha0) grid.
-%   4. Compute asymptotic and calibrated robust-distance cutoffs.
-%   5. Evaluate empirical outlier-test size on an independent evaluation half.
-%   6. Save the calibration database and, optionally, diagnostic figures.
+%   1. Estimate determinant-bias correction factors.
+%   2. Run split-sample Monte Carlo simulations over the (n, p, nu, alpha0) grid.
+%   3. Compute asymptotic and calibrated robust-distance cutoffs.
+%   4. Evaluate empirical outlier-test size on an independent evaluation half.
+%   5. Save the calibration database and, optionally, diagnostic figures.
 %
 % Main inputs:
 %   - Simulation grid: n_vec, p_vec, nu_vec, alpha0_vec
