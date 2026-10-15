@@ -53,6 +53,8 @@ go under the "Add Ons section" of the "Home tab" and install FSDA.
 
 ### SCRIPTS DESCRIPTION
 
+In the following: script s01_mcdt_finite_sample_calibration.m (s01 for short) generates the calibration database, s02_mcdt_interpolation_analysis.m (s02) builds the interpolation tools, and the resulting lookup tables are used in real applications where the final sample size and trimming level are not known in advance (like in s03_application.m).
+
 ## s01_mcdt_finite_sample_calibration.m
 
 This is the simulation of MCD Robust-Distance Calibration Under Multivariate-t.
@@ -72,13 +74,13 @@ The script:
 - Saves results and, if enabled, diagnostic plots.
 
 Key expected output:
-- A timestamped results folder under out_s1s2s3/calibration_YYYY-mm-dd_HHMMSS/
-- mcd_heavytails_RD_calibration_results.mat
-- mcd_heavytails_RD_calibration.csv
+- A timestamped results folder under `out_s1s2s3/calibration_YYYY-mm-dd_HHMMSS/`
+- `mcd_heavytails_RD_calibration_results.mat`
+- `mcd_heavytails_RD_calibration.csv`
 
 Optional diagnostics:
-- mcd_heavytails_RD_calibration_diagnostics.csv
-- BiasDet_table.mat
+- `mcd_heavytails_RD_calibration_diagnostics.csv`
+- `BiasDet_table.mat`
 - PNG, EPS, and FIG diagnostic plots
 
 ## s02_mcdt_interpolation_analysis.m
@@ -86,9 +88,9 @@ Optional diagnostics:
 This script takes as input the calibration output produced by s01_mcdt_finite_sample_calibration.m and produces in output a set of interpolation summaries and lookup tables for the quantities studied in the paper.
 
 Required input files from the s01 results folder:
-- BiasDet_table_mean_root.csv for the Section 5.4 analysis of delta_hat = 1 / BiasDet.
-- mcd_heavytails_RD_calibration.csv for the Section 6 analysis of kappa_RD^delta.
-- The script assumes the s01 CSV files already exist in out_s1s2s3/<calibration_folder>/
+- `BiasDet_table_mean_root.csv` for the Section 5.4 analysis of delta_hat = 1 / BiasDet.
+- `mcd_heavytails_RD_calibration.csv` for the Section 6 analysis of kappa_RD^delta.
+- The script assumes the s01 CSV files already exist in `out_s1s2s3/<calibration_folder>/`
 
 The script:
 - Loads the s01 calibration tables.
@@ -97,7 +99,7 @@ The script:
 - Saves dense lookup tables, summary tables, and optional diagnostic plots.
 
 Key expected output:
-- A timestamped folder under out_s1s2s3/interpolation_YYYY-mm-dd_HHMMSS/
+- A timestamped folder under `out_s1s2s3/interpolation_YYYY-mm-dd_HHMMSS/`
 - Separate subfolders for delta_interpolation and RD_interpolation. In each of these subfolder the script generates CSV summary tables, a .mat   file with the processed analysis and optional plot files if producePlots = true
 
 ## s03_application.m
@@ -105,10 +107,10 @@ Key expected output:
 This demonstrates the application of the finite-sample MCD-t calibration to a real dataset, Grass, and compares the asymptotic cutoff with the calibrated cutoff.
 
 Main inputs:
-- datasets/Grass.prn (or, if datatype = 2, an independent synthetic Student-t sample generated inside the script)
+- `datasets/Grass.prn` (or, if datatype = 2, an independent synthetic Student-t sample generated inside the script)
 - Interpolation outputs from s02, specifically:
-    delta_interpolation/MCDt_delta_interpolation_analysis.mat
-    RD_interpolation/MCDt_RD_interpolation_analysis.mat
+    `delta_interpolation/MCDt_delta_interpolation_analysis.mat`
+    `RD_interpolation/MCDt_RD_interpolation_analysis.mat`
 - Model settings fixed in the script for the Grass case are: 
 -- nu0 = 8
 -- alpha0 = 0.50
@@ -128,3 +130,24 @@ Expected output is a robust-distance index plot showing:
 - A scatterplot matrix (spmplot) with the same grouping.
 The output is primarily visual but the MATLAB Command Output reports relevant statistics.
 
+### Reproducibility workflow summary
+
+1. Run `s01_mcdt_finite_sample_calibration.m`.
+   This creates a timestamped folder in `out_s1s2s3/`, for example: `calibration_YYYY-mm-dd_HHMMSS`
+
+2. Copy that folder name into `s02_mcdt_interpolation_analysis.m`:
+   ```matlab
+   calibration_folder = 'calibration_YYYY-mm-dd_HHMMSS';
+
+3. Run `s02_mcdt_interpolation_analysis.m`.
+   - This writes a new timestamped folder in `out_s1s2s3/`, for example: `interpolation_YYYY-mm-dd_HHMMSS`
+   - Keep these files for later use:
+     - `delta_interpolation/MCDt_delta_interpolation_analysis.mat`
+     - `RD_interpolation/MCDt_RD_interpolation_analysis.mat`
+
+4. Use the interpolated calibration in your application, like it is done in script `s03_application.m`.
+   - This loads the `.mat` files produced by `s02`.
+   - For a new dataset, match the observed `n`, `p`, `nu`, and `alpha0` to the stored interpolation model.
+   - Evaluate the interpolated `delta_hat` and `kappa_RD^delta`, then use them to calibrate the MCD robust-distance cutoff.
+   - This is the practical step that makes the calibration usable in real applications, where the final sample size, dimension, tail parameter, and trimming level are not known in advance.
+   - If the requested configuration lies outside the supported range, extend the grid and rerun `s01` and `s02`.
