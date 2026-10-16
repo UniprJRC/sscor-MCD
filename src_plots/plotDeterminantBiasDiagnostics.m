@@ -1,4 +1,4 @@
-function hf = plotDeterminantBiasDiagnostics(T_mean_root, T_root_mean_cov, p, alpha0Plot)
+function hf = plotDeterminantBiasDiagnostics(T_mean_root, T_root_mean_cov, p, alpha0Plot, nuFilter)
 
 % plotDeterminantBiasDiagnostics
 %
@@ -6,102 +6,133 @@ function hf = plotDeterminantBiasDiagnostics(T_mean_root, T_root_mean_cov, p, al
 %   T_mean_root, T_root_mean_cov : long-format tables with columns
 %       [alpha0 n p nu BiasDet]
 %   p          : dimension to plot (scalar)
-%   alpha0Plot : which alpha0 to plot (scalar; defaults to the smallest
-%                value present in T_mean_root if omitted)
+%   alpha0Plot  : trimming level to plot (scalar; optional)
+%   nuFilter    : optional scalar/vector of nu values to keep
 
 logscale = false;
 
-plot_det_root_mean_cov = false; % leave second construction off by default
-
 if nargin < 3
-    error('Usage: plotDeterminantBiasDiagnostics(T_mean_root, T_root_mean_cov, p [, alpha0Plot])');
+    error('Usage: plotDeterminantBiasDiagnostics(T_mean_root, T_root_mean_cov, p [, alpha0Plot, nuFilter])');
 end
 
 if nargin < 4 || isempty(alpha0Plot)
     alpha0Plot = min(T_mean_root.alpha0);
 end
 
-% ---- plotting defaults ----
-set(groot,'defaultTextInterpreter','latex');
-set(groot,'defaultAxesTickLabelInterpreter','latex');
-set(groot,'defaultLegendInterpreter','latex');
+if nargin < 5
+    nuFilter = [];
+end
+
+hasRootMeanCov = istable(T_root_mean_cov) && ~isempty(T_root_mean_cov) && ...
+    all(ismember({'p', 'alpha0', 'nu', 'n', 'BiasDet'}, T_root_mean_cov.Properties.VariableNames));
+
+plot_det_root_mean_cov = hasRootMeanCov;
+
+set(groot, 'defaultTextInterpreter', 'latex');
+set(groot, 'defaultAxesTickLabelInterpreter', 'latex');
+set(groot, 'defaultLegendInterpreter', 'latex');
 fs = 20;
-set(groot,'defaultAxesFontSize',fs,'defaultTextFontSize',fs,'defaultLegendFontSize',fs);
+set(groot, 'defaultAxesFontSize', fs, 'defaultTextFontSize', fs, 'defaultLegendFontSize', fs);
 
-colMRD = [0.00 0.4470 0.7410];   % blue
-colRDM = [0.8500 0.3250 0.0980]; % orange
-lw = 2; mkSize = 7;
+colMRD = [0.00 0.4470 0.7410];
+colRDM = [0.8500 0.3250 0.0980];
+lw = 2;
+mkSize = 7;
 
-% ---- select data ----
-idxMRall = T_mean_root.p==p & T_mean_root.alpha0==alpha0Plot;
-idxRMall = T_root_mean_cov.p==p & T_root_mean_cov.alpha0==alpha0Plot;
+idxMRall = T_mean_root.p == p & T_mean_root.alpha0 == alpha0Plot;
+if ~isempty(nuFilter)
+    idxMRall = idxMRall & ismember(T_mean_root.nu, nuFilter);
+end
+
 nuGrid = unique(T_mean_root.nu(idxMRall));
 nCols = numel(nuGrid);
 if nCols == 0
     error('No data found for p=%d, alpha0=%.4g in T_mean_root.', p, alpha0Plot);
 end
 
-% shared y-range per row, across all nu columns (not across rows)
-dAll     = [T_mean_root.BiasDet(idxMRall); T_root_mean_cov.BiasDet(idxRMall); 1];
-padRow1  = 0.05*(max(dAll)-min(dAll)); if padRow1==0, padRow1=0.05; end
-yLimRow1 = [min(dAll)-padRow1, max(dAll)+padRow1];
+dAll = T_mean_root.BiasDet(idxMRall);
 
-deltaAll = [1./T_mean_root.BiasDet(idxMRall); 1./T_root_mean_cov.BiasDet(idxRMall); 1];
-padRow2  = 0.05*(max(deltaAll)-min(deltaAll)); if padRow2==0, padRow2=0.05; end
-yLimRow2 = [min(deltaAll)-padRow2, max(deltaAll)+padRow2];
+if plot_det_root_mean_cov
+    idxRMall = T_root_mean_cov.p == p & T_root_mean_cov.alpha0 == alpha0Plot;
+    if ~isempty(nuFilter)
+        idxRMall = idxRMall & ismember(T_root_mean_cov.nu, nuFilter);
+    end
+    dAll = [dAll; T_root_mean_cov.BiasDet(idxRMall)];
+end
 
-% ---- figure ----
+dAll = [dAll; 1];
+padRow1 = 0.05 * (max(dAll) - min(dAll));
+if padRow1 == 0
+    padRow1 = 0.05;
+end
+yLimRow1 = [min(dAll) - padRow1, max(dAll) + padRow1];
+
+deltaAll = 1 ./ T_mean_root.BiasDet(idxMRall);
+if plot_det_root_mean_cov
+    deltaAll = [deltaAll; 1 ./ T_root_mean_cov.BiasDet(idxRMall)];
+end
+deltaAll = [deltaAll; 1];
+padRow2 = 0.05 * (max(deltaAll) - min(deltaAll));
+if padRow2 == 0
+    padRow2 = 0.05;
+end
+yLimRow2 = [min(deltaAll) - padRow2, max(deltaAll) + padRow2];
+
 hf = figure('Name', sprintf('Determinant bias diagnostics: p=%d, alpha0=%.2f', p, alpha0Plot));
+
 for iu = 1:nCols
     nu = nuGrid(iu);
 
-    idxMR = T_mean_root.p==p & T_mean_root.nu==nu & T_mean_root.alpha0==alpha0Plot;
-    [nMR,ordMR] = sort(T_mean_root.n(idxMR));
-    dMR = T_mean_root.BiasDet(idxMR); dMR = dMR(ordMR);
+    idxMR = T_mean_root.p == p & T_mean_root.nu == nu & T_mean_root.alpha0 == alpha0Plot;
+    [nMR, ordMR] = sort(T_mean_root.n(idxMR));
+    dMR = T_mean_root.BiasDet(idxMR);
+    dMR = dMR(ordMR);
 
     if plot_det_root_mean_cov
-        idxRM = T_root_mean_cov.p==p & T_root_mean_cov.nu==nu & T_root_mean_cov.alpha0==alpha0Plot;
-        [nRM,ordRM] = sort(T_root_mean_cov.n(idxRM));
-        dRM = T_root_mean_cov.BiasDet(idxRM); dRM = dRM(ordRM);
+        idxRM = T_root_mean_cov.p == p & T_root_mean_cov.nu == nu & T_root_mean_cov.alpha0 == alpha0Plot;
+        [nRM, ordRM] = sort(T_root_mean_cov.n(idxRM));
+        dRM = T_root_mean_cov.BiasDet(idxRM);
+        dRM = dRM(ordRM);
     end
 
-    % ---- row 1: d-bar (Eq. 9) ----
-    subplot(2,nCols,iu); hold on
-    plot(nMR, dMR, 'LineStyle','--', 'Marker','s', 'Color',colMRD, ...
-        'LineWidth',lw, 'MarkerSize',mkSize, 'DisplayName','mean root determinant');
-    if plot_det_root_mean_cov
-        plot(nRM, dRM, 'LineStyle','-.', 'Marker','d', 'Color',colRDM, ...
-            'LineWidth',lw, 'MarkerSize',mkSize, 'DisplayName','root determinant of mean covariance');
+    subplot(2, nCols, iu); hold on
+    plot(nMR, dMR, 'LineStyle', '--', 'Marker', 's', 'Color', colMRD, ...
+        'LineWidth', lw, 'MarkerSize', mkSize, 'DisplayName', 'mean root determinant');
+    if plot_det_root_mean_cov && ~isempty(dRM)
+        plot(nRM, dRM, 'LineStyle', '-.', 'Marker', 'd', 'Color', colRDM, ...
+            'LineWidth', lw, 'MarkerSize', mkSize, 'DisplayName', 'root determinant of mean covariance');
     end
-    yline(1,'k:','HandleVisibility','off');
+    yline(1, 'k:', 'HandleVisibility', 'off');
 
     if logscale
-        set(gca,'XScale','log');
+        set(gca, 'XScale', 'log');
     end
 
     ylim(yLimRow1);
-    title(sprintf('$ p=%d $, $ \\alpha_0=%.2f $, $\\nu=%d$', p, alpha0Plot, nu), 'Interpreter', 'latex');
-    if iu==1
-        ylabel('$\bar d^{\alpha_0}_{p,n,\nu}$', 'Interpreter','latex');
-        %legend('Location','best')
+    title(sprintf('$p=%d$, $\\alpha_0=%.2f$, $\\nu=%d$', p, alpha0Plot, nu), ...
+        'Interpreter', 'latex');
+
+    if iu == 1
+        ylabel('$\bar d^{\alpha_0}_{p,n,\nu}$', 'Interpreter', 'latex');
     end
 
-    % ---- row 2: delta-hat (Eq. 10) ----
-    subplot(2,nCols,nCols+iu); hold on
-    plot(nMR, 1./dMR, 'LineStyle','--', 'Marker','s', 'Color',colMRD, 'LineWidth',lw, 'MarkerSize',mkSize);
-    if plot_det_root_mean_cov
-        plot(nRM, 1./dRM, 'LineStyle','-.', 'Marker','d', 'Color',colRDM, 'LineWidth',lw, 'MarkerSize',mkSize);
+    subplot(2, nCols, nCols + iu); hold on
+    plot(nMR, 1 ./ dMR, 'LineStyle', '--', 'Marker', 's', 'Color', colMRD, ...
+        'LineWidth', lw, 'MarkerSize', mkSize);
+    if plot_det_root_mean_cov && ~isempty(dRM)
+        plot(nRM, 1 ./ dRM, 'LineStyle', '-.', 'Marker', 'd', 'Color', colRDM, ...
+            'LineWidth', lw, 'MarkerSize', mkSize);
     end
-    yline(1,'k:','HandleVisibility','off', 'LineWidth', 2.5);
+    yline(1, 'k:', 'HandleVisibility', 'off', 'LineWidth', 2.5);
 
     if logscale
-        set(gca,'XScale','log');
+        set(gca, 'XScale', 'log');
     end
 
     ylim(yLimRow2);
-    xlabel('$n$', 'Interpreter','latex');
-    if iu==1
-        ylabel('$\widehat{\delta}_n$', 'Interpreter','latex');
+    xlabel('$n$', 'Interpreter', 'latex');
+    if iu == 1
+        ylabel('$\widehat{\delta}_n$', 'Interpreter', 'latex');
     end
 end
 
