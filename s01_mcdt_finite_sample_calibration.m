@@ -94,7 +94,7 @@ nu_vec      = [3,5,7];
 alpha0_vec  = 0.05:0.05:0.50;
 
 % Quick test override
-quickTest.n_vec      = [50:50:500];  % [50];
+quickTest.n_vec      = [50:10:500];  % [50];
 quickTest.p_vec      = [5];  % [2,5];
 quickTest.nu_vec     = [3];  % [3,5,7];
 quickTest.alpha0_vec = [0.5];  % [0.10, 0.25, 0.5];

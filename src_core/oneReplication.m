@@ -1,4 +1,4 @@
-function [detRoot, covMat] = oneReplication(n, p, nu, alpha0, conflev, SigmaTrueInv)
+function [detRoot, covMat, locVec, mdBase, X] = oneReplication(n, p, nu, alpha0, conflev, SigmaTrueInv)
 % ONEREPLICATION  One Monte Carlo replication for determinant-bias estimation
 %
 % Generates one Student-t sample, computes the MCD covariance estimate,
@@ -14,6 +14,12 @@ function [detRoot, covMat] = oneReplication(n, p, nu, alpha0, conflev, SigmaTrue
 % Outputs:
 %   detRoot        p-th root of det(covMat * SigmaTrueInv)
 %   covMat         MCD covariance estimate for the replication
+%
+% Full call chain:
+%   s01_mcdt_finite_sample_calibration.m
+%       -> estimateBiasDetFactors.m
+%           -> estimateOneConfiguration
+%               -> oneReplication.m
 
 X = randn(n, p) .* sqrt(nu ./ chi2rnd(nu, n, 1));
 
@@ -28,6 +34,13 @@ RAW = mcd(X, ...
     'msg', 0, ...
     'nocheck', 1);
 
+locVec = RAW.loc;
 covMat = RAW.cov;
-detRoot = det(covMat * SigmaTrueInv)^(1 / p);
+mdBase = RAW.md;
+
+if ~isempty(SigmaTrueInv)
+    detRoot = det(covMat * SigmaTrueInv)^(1 / p);
+else
+    detRoot = [];
+end
 end
