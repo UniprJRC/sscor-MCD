@@ -82,13 +82,14 @@ end
 
 plotMode = lower(char(plotMode));
 
-validModes = {'pooled','avg','replicationwise','all'};
+validModes = {'pooled','avg','replicationwise','all','pooled_avg'};
 if ~ismember(plotMode, validModes)
     error('plotSizeDiagnostics:invalidPlotMode', ...
         ['Unknown plotMode "%s". Use one of: ' ...
-        '''pooled'', ''avg'', ''replicationwise'', ''all''.'], ...
+         '''pooled'', ''avg'', ''replicationwise'', ''all'', ''pooled_avg''.'], ...
         plotMode);
 end
+
 
 %% ------------------------------------------------------------------------
 % Check required variables
@@ -113,12 +114,16 @@ switch plotMode
     case 'replicationwise'
         requiredVars{end+1} = 'sizeRatio_calibrated_replicationwise';
 
-    case 'all'
+    case {'all', 'pooled_avg'}
         requiredVars = [requiredVars, ...
             {'sizeRatio_calibrated', ...
-             'sizeRatio_calibrated_pooled', ...
-             'sizeRatio_calibrated_replicationwise'}];
+             'sizeRatio_calibrated_pooled'}];
+
+        if strcmp(plotMode, 'all')
+            requiredVars{end+1} = 'sizeRatio_calibrated_replicationwise';
+        end
 end
+
 
 missingVars = setdiff(requiredVars, CalibrationDatabase.Properties.VariableNames);
 if ~isempty(missingVars)
@@ -197,6 +202,19 @@ switch plotMode
         calibratedMarkers = {'d'};
         calibratedColors = {colRep};
 
+    case 'pooled_avg'
+        calibratedVars = { ...
+            'sizeRatio_calibrated_pooled', ...
+            'sizeRatio_calibrated'};
+
+        calibratedLabels = { ...
+            'after pooled calibration', ...
+            'after average calibration'};
+
+        calibratedStyles = {'--','-.'};
+        calibratedMarkers = {'s','o'};
+        calibratedColors = {colPooled, colAvg};
+
     case 'all'
         calibratedVars = { ...
             'sizeRatio_calibrated_pooled', ...
@@ -212,6 +230,7 @@ switch plotMode
         calibratedMarkers = {'s','o','d'};
         calibratedColors = {colPooled, colAvg, colRep};
 end
+
 
 %% ------------------------------------------------------------------------
 % Determine common y-axis range
@@ -242,9 +261,12 @@ yLim = [yMin - yPad, yMax + yPad];
 
 if strcmp(plotMode, 'all')
     modeTitle = 'A/B/C calibration comparison';
+elseif strcmp(plotMode, 'pooled_avg')
+    modeTitle = 'pooled vs average calibration';
 else
     modeTitle = calibratedLabels{1};
 end
+
 
 hf = figure( ...
     'Name', ...

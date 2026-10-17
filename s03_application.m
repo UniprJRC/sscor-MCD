@@ -45,8 +45,6 @@
 %
 % ========================================================================
 
-clear; clc; close all   % cleaning
-
 seed = 20260711;     % Reproducibility
 projectRoot = '.';   % Your project folder (codes run here)
 
@@ -61,7 +59,38 @@ addpath(fullfile(projectRoot, 'src_plots'));
 %% 1. Configuration and Paths
 ds_path      = './datasets';
 dsfile1      = 'Grass.prn';
-interpFolder = './s1_s2_output/MCDt_all_interpolation_analysis_p3_nu8';
+
+interpFolder1 = './s1_s2_output/MCDt_all_interpolation_analysis_p3_nu8';
+interpFolder2 = './out_article/interpolation_grass_p3_nu8';
+
+hasInterp1 = isfolder(interpFolder1);
+hasInterp2 = isfolder(interpFolder2);
+
+if hasInterp1 && ~hasInterp2
+    interpFolder = interpFolder1;
+
+elseif ~hasInterp1 && hasInterp2
+    interpFolder = interpFolder2;
+
+elseif hasInterp1 && hasInterp2
+    choice = questdlg( ...
+        'Two interpolation folders were found. Which one should be used?', ...
+        'Select interpolation folder', ...
+        'Folder 1', 'Folder 2', 'Folder 1');
+
+    switch choice
+        case 'Folder 1'
+            interpFolder = interpFolder1;
+        case 'Folder 2'
+            interpFolder = interpFolder2;
+        otherwise
+            error('No interpolation folder selected.');
+    end
+
+else
+    error('Neither interpolation folder exists.');
+end
+
 
 % Model parameters (Barabesi et al., 2026)
 nu0      = 8;
@@ -235,146 +264,158 @@ fprintf('Outliers flagged by Calibrated cutoff: %d\n', numel(outliers_cal_loess)
 fprintf('Borderline observations reclassified as regular: %d (indices: %s)\n\n', ...
     numel(borderline_idx_loess), mat2str(borderline_idx_loess'));
 
-%% groups and colors
 
+% Plot the diagnostic figures without mixing them with the computation step.
 % groups labels, to be used in the plots
 group_labels = nan(n0, 1);
 group_labels(good_asym) = 0;            % asym regular, unfilled
 group_labels(cal_outliers_loess) = 1;   % calibrated final outliers
 group_labels(borderline_idx_loess) = 2; % asymptotic-only outliers
 
-regularColor = [0.2 0.2 0.2];
-regularFace  = 'none';
+[axRD, axSPM] = plotApplicationDiagnostics( ...
+    X0, RD2_delta_loess, group_labels, q2_asym, q2_cal_loess, ...
+    'Grass Dataset');
 
-calColor = [0.00 0.45 0.74];
-calFace  = [0.00 0.45 0.74];
-
-borderColor = [0.85 0.33 0.10];
-borderFace  = [0.85 0.33 0.10];
-
-%% 6. Diagnostic Plot 1: Robust Distance Index Plot
-figure('Name', 'Grass_RD_Diagnostic', 'Position', [100, 100, 900, 500]);
-hold on; grid on;
-
-idx0 = find(group_labels == 0); % asym regular, unfilled
-idx1 = find(group_labels == 1); % calibrated final outliers
-idx2 = find(group_labels == 2); % asymptotic-only outliers
-
-plot(idx0, RD2_delta_loess(idx0), 'o', ...
-    'Color', regularColor, 'MarkerFaceColor', regularFace, ...
-    'MarkerSize', 5, 'DisplayName', 'Regular units');
-
-plot(idx1, RD2_delta_loess(idx1), 'o', ...
-    'Color', calColor, 'MarkerFaceColor', calFace, ...
-    'MarkerSize', 6, 'DisplayName', 'Calibrated outliers');
-
-plot(idx2, RD2_delta_loess(idx2), 'o', ...
-    'Color', borderColor, 'MarkerFaceColor', borderFace, ...
-    'MarkerSize', 8, 'DisplayName', 'Borderline (asymptotic only)');
-
-yline(q2_asym, '--r', 'LineWidth', 1.8, ...
-    'DisplayName', 'Asymptotic Cutoff $q^2_{\nu,p}(c)$');
-yline(q2_cal_loess, '-b', 'LineWidth', 2.0, ...
-    'DisplayName', 'Calibrated Cutoff $q^{2,\delta}_{\mathrm{cal}}(c)$');
-
-xlabel('Observation index $i$', 'Interpreter', 'latex', 'FontSize', 14);
-ylabel('Squared Robust Distance $RD_i^{2,\delta}$', 'Interpreter', 'latex', 'FontSize', 14);
-title(sprintf('Grass Dataset ($n=%d, p=%d$): Asymptotic vs Calibrated Cutoffs', n0, p0), ...
-    'Interpreter', 'latex', 'FontSize', 16);
-legend('Location', 'northeast', 'Interpreter', 'latex', 'FontSize', 12);
-ylim([0, max([RD2_delta_loess; q2_cal_loess]) * 1.15]);
+clickableMultiLegend(axRD);
+clickableMultiLegend(axSPM);
 
 
-%% 7. Diagnostic Plot 2: Scatterplot Matrix (spmplot)
-% Same group convention as section 6:
-%   0 = regular units, open gray
-%   1 = calibrated outliers, filled blue
-%   2 = borderline units, filled orange
-
-groupOrder = [0 1 2];
-[~, groupIdx] = ismember(group_labels, groupOrder);
-
-groupNames = strings(n0, 1);
-groupNames(group_labels == 0) = "Regular units";
-groupNames(group_labels == 1) = "Calibrated outliers";
-groupNames(group_labels == 2) = "Borderline (asymptotic only)";
-
-plo = struct;
-plo.sym = repmat({'o'}, 1, numel(groupOrder));
-plo.doleg = 'on';
-
-% [H1, AX1, BigAx1] = spmplot(X0, 'group', groupIdx, ...
-%     'dispopt', 'box', 'tag', 'Grass', 'plo', plo);
-[H1, AX1, BigAx1] = spmplot(X0, 'group', groupNames, ...
-    'plo', plo, 'dispopt', 'box');
-
-
-sgtitle('Grass Data: Outlier Calibration Diagnostics', ...
-    'FontSize', 16, 'Interpreter', 'latex');
-
-% Recolor the scatterplot matrix to match section 6 exactly.
-pData = size(X0, 2);
-
-if ismatrix(AX1) && size(AX1,1) >= pData && size(AX1,2) >= pData
-    axGrid = AX1(1:pData, 1:pData);
-    mask = ~eye(pData);
-    axOff = axGrid(mask);
-    [ii, jj] = ind2sub([pData, pData], find(mask));
-else
-    axOff = AX1(:);
-    axOff = axOff(1:min(numel(axOff), pData * (pData - 1)));
-    [ii, jj] = ind2sub([pData, pData], (1:numel(axOff)).');
-    keep = ii ~= jj;
-    axOff = axOff(keep);
-    ii = ii(keep);
-    jj = jj(keep);
-end
-
-
-for k = 1:numel(axOff)
-    ax = axOff(k);
-    i = ii(k);
-    j = jj(k);
-
-    hLines = findall(ax, 'Type', 'line');
-    hLines = hLines(arrayfun(@(h) isprop(h, 'Marker') && ~strcmp(h.Marker, 'none'), hLines));
-
-    if isempty(hLines)
-        continue;
-    end
-
-    for h = 1:numel(hLines)
-        coords = [hLines(h).XData(:), hLines(h).YData(:)];
-
-        for g = 0:2
-            expected = X0(group_labels == g, [j i]);
-
-            if isempty(expected)
-                continue;
-            end
-
-            if size(coords, 1) == size(expected, 1) && isequal(sortrows(coords), sortrows(expected))
-                switch g
-                    case 0
-                        hLines(h).MarkerEdgeColor = regularColor;
-                        hLines(h).MarkerFaceColor = regularFace;
-                    case 1
-                        hLines(h).MarkerEdgeColor = calColor;
-                        hLines(h).MarkerFaceColor = calFace;
-                    case 2
-                        hLines(h).MarkerEdgeColor = borderColor;
-                        hLines(h).MarkerFaceColor = borderFace;
-                end
-                break;
-            end
-        end
-    end
-end
-
-%set(AX1, 'FontSize', 12);
-% saveas(BigAx1,[ds_path filesep 'grass.fig'],'fig');
-% saveas(BigAx1,[ds_path filesep 'grass.eps'],'epsc');
-
+% OBSOLETE: moved to plotApplicationDiagnostics.m
+% %% groups and colors
+% 
+% 
+% regularColor = [0.2 0.2 0.2];
+% regularFace  = 'none';
+% 
+% calColor = [0.00 0.45 0.74];
+% calFace  = [0.00 0.45 0.74];
+% 
+% borderColor = [0.85 0.33 0.10];
+% borderFace  = [0.85 0.33 0.10];
+%
+% %% 6. Diagnostic Plot 1: Robust Distance Index Plot
+% figure('Name', 'Grass_RD_Diagnostic', 'Position', [100, 100, 900, 500]);
+% hold on; grid on;
+% 
+% idx0 = find(group_labels == 0); % asym regular, unfilled
+% idx1 = find(group_labels == 1); % calibrated final outliers
+% idx2 = find(group_labels == 2); % asymptotic-only outliers
+% 
+% plot(idx0, RD2_delta_loess(idx0), 'o', ...
+%     'Color', regularColor, 'MarkerFaceColor', regularFace, ...
+%     'MarkerSize', 5, 'DisplayName', 'Regular units');
+% 
+% plot(idx1, RD2_delta_loess(idx1), 'o', ...
+%     'Color', calColor, 'MarkerFaceColor', calFace, ...
+%     'MarkerSize', 6, 'DisplayName', 'Calibrated outliers');
+% 
+% plot(idx2, RD2_delta_loess(idx2), 'o', ...
+%     'Color', borderColor, 'MarkerFaceColor', borderFace, ...
+%     'MarkerSize', 8, 'DisplayName', 'Borderline (asymptotic only)');
+% 
+% yline(q2_asym, '--r', 'LineWidth', 1.8, ...
+%     'DisplayName', 'Asymptotic Cutoff $q^2_{\nu,p}(c)$');
+% yline(q2_cal_loess, '-b', 'LineWidth', 2.0, ...
+%     'DisplayName', 'Calibrated Cutoff $q^{2,\delta}_{\mathrm{cal}}(c)$');
+% 
+% xlabel('Observation index $i$', 'Interpreter', 'latex', 'FontSize', 14);
+% ylabel('Squared Robust Distance $RD_i^{2,\delta}$', 'Interpreter', 'latex', 'FontSize', 14);
+% title(sprintf('Grass Dataset ($n=%d, p=%d$): Asymptotic vs Calibrated Cutoffs', n0, p0), ...
+%     'Interpreter', 'latex', 'FontSize', 16);
+% legend('Location', 'northeast', 'Interpreter', 'latex', 'FontSize', 12);
+% ylim([0, max([RD2_delta_loess; q2_cal_loess]) * 1.15]);
+% 
+% 
+% %% 7. Diagnostic Plot 2: Scatterplot Matrix (spmplot)
+% % Same group convention as section 6:
+% %   0 = regular units, open gray
+% %   1 = calibrated outliers, filled blue
+% %   2 = borderline units, filled orange
+% 
+% groupOrder = [0 1 2];
+% [~, groupIdx] = ismember(group_labels, groupOrder);
+% 
+% groupNames = strings(n0, 1);
+% groupNames(group_labels == 0) = "Regular units";
+% groupNames(group_labels == 1) = "Calibrated outliers";
+% groupNames(group_labels == 2) = "Borderline (asymptotic only)";
+% 
+% plo = struct;
+% plo.sym = repmat({'o'}, 1, numel(groupOrder));
+% plo.doleg = 'on';
+% 
+% % [H1, AX1, BigAx1] = spmplot(X0, 'group', groupIdx, ...
+% %     'dispopt', 'box', 'tag', 'Grass', 'plo', plo);
+% [H1, AX1, BigAx1] = spmplot(X0, 'group', groupNames, ...
+%     'plo', plo, 'dispopt', 'box');
+% 
+% 
+% sgtitle('Grass Data: Outlier Calibration Diagnostics', ...
+%     'FontSize', 16, 'Interpreter', 'latex');
+% 
+% % Recolor the scatterplot matrix to match section 6 exactly.
+% pData = size(X0, 2);
+% 
+% if ismatrix(AX1) && size(AX1,1) >= pData && size(AX1,2) >= pData
+%     axGrid = AX1(1:pData, 1:pData);
+%     mask = ~eye(pData);
+%     axOff = axGrid(mask);
+%     [ii, jj] = ind2sub([pData, pData], find(mask));
+% else
+%     axOff = AX1(:);
+%     axOff = axOff(1:min(numel(axOff), pData * (pData - 1)));
+%     [ii, jj] = ind2sub([pData, pData], (1:numel(axOff)).');
+%     keep = ii ~= jj;
+%     axOff = axOff(keep);
+%     ii = ii(keep);
+%     jj = jj(keep);
+% end
+% 
+% 
+% for k = 1:numel(axOff)
+%     ax = axOff(k);
+%     i = ii(k);
+%     j = jj(k);
+% 
+%     hLines = findall(ax, 'Type', 'line');
+%     hLines = hLines(arrayfun(@(h) isprop(h, 'Marker') && ~strcmp(h.Marker, 'none'), hLines));
+% 
+%     if isempty(hLines)
+%         continue;
+%     end
+% 
+%     for h = 1:numel(hLines)
+%         coords = [hLines(h).XData(:), hLines(h).YData(:)];
+% 
+%         for g = 0:2
+%             expected = X0(group_labels == g, [j i]);
+% 
+%             if isempty(expected)
+%                 continue;
+%             end
+% 
+%             if size(coords, 1) == size(expected, 1) && isequal(sortrows(coords), sortrows(expected))
+%                 switch g
+%                     case 0
+%                         hLines(h).MarkerEdgeColor = regularColor;
+%                         hLines(h).MarkerFaceColor = regularFace;
+%                     case 1
+%                         hLines(h).MarkerEdgeColor = calColor;
+%                         hLines(h).MarkerFaceColor = calFace;
+%                     case 2
+%                         hLines(h).MarkerEdgeColor = borderColor;
+%                         hLines(h).MarkerFaceColor = borderFace;
+%                 end
+%                 break;
+%             end
+%         end
+%     end
+% end
+% 
+% %set(AX1, 'FontSize', 12);
+% % saveas(BigAx1,[ds_path filesep 'grass.fig'],'fig');
+% % saveas(BigAx1,[ds_path filesep 'grass.eps'],'epsc');
+% 
 
 
 

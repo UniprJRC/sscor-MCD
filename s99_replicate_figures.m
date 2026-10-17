@@ -64,6 +64,7 @@ pSel_F3   = 2;
 nuSel_F3  = 5;
 conflevSel_F3 = 0.50;
 
+% Plot the delta_hat LOESS surface for the selected (p, nu) slice.
 h_F3 = plotLoessInterpolantDelta(T_F3, pSel_F3, nuSel_F3);
 
 
@@ -132,4 +133,55 @@ pSel_F6   = 2;
 nuSel_F6  = 5;
 conflevSel_F6 = 0.95;
 
+% Plot the kappa_RD^delta LOESS surface for the selected (p, nu) slice.
 h_F6 = plotLoessInterpolantRD(T_F6, pSel_F6, nuSel_F6, conflevSel_F6);
+
+%% Figure 7: application to Grass dataset
+
+s03_application;
+
+%% Figure B1: size diagnostics under two percentile conventions
+
+% Compare the Figure 5 diagnostic under two calibration settings:
+%   - 'inclusive'  -> the default convention used in the main paper
+%   - 'midpoint'   -> the alternative convention used to build a separate
+%                     calibration table
+% Both figures use the same plotting settings; only the calibration table
+% changes.
+
+% Calibration table computed with the 'inclusive' convention.
+F5  = fullfile(projectRoot, "out_article", "mcd_heavytails_RD_calibration.csv");
+T_5 = readtable(F5);
+
+% Calibration table computed with the 'midpoint' convention.
+FB1m  = fullfile(projectRoot, "out_article", "mcd_heavytails_RD_calibration_midpoint.csv");
+T_B1m = readtable(FB1m);
+
+% Plot the baseline Figure 5 version.
+h_B1i = plotSizeDiagnostics(T_5, p_F5, alpha0_F5, method_F5, plotMode_F5, nuFilter_F5);
+
+% Plot the counterpart obtained with the alternative 'midpoint' setting.
+h_B1m = plotSizeDiagnostics(T_B1m, p_F5, alpha0_F5, method_F5, plotMode_F5, nuFilter_F5);
+
+%% Figure B2: size diagnostics with average and pooled calibrations
+
+% Replicate the Figure 5 setup, but keep only the two main calibration
+% summaries: pooled and average. This makes the comparison between the two
+% aggregated calibration rules explicit while leaving all other settings
+% unchanged.
+
+% Reuse the inclusive calibration table from the main paper.
+F_B2 = fullfile(projectRoot, "out_article", "mcd_heavytails_RD_calibration.csv");
+T_B2 = readtable(F_B2);
+
+% Same configuration as Figure 5.
+p_F_B2        = 5;     % dimension
+alpha0_F_B2   = 0.50;  % trimming proportion
+nuFilter_F_B2 = 3;     % keep only the nu = 3 panel
+method_F_B2   = 'det_mean_root';
+
+% Plot only pooled and average calibration curves in the same panel.
+plotMode_F_B2 = 'pooled_avg';
+
+h_B2 = plotSizeDiagnostics( ...
+    T_B2, p_F_B2, alpha0_F_B2, method_F_B2, plotMode_F_B2, nuFilter_F_B2);

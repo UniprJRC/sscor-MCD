@@ -76,7 +76,7 @@ projectRoot = '.'; % Project folder
 % SIMULATION SETTINGS
 % =========================================================================
 
-calibration_folder = 'calibration_grass_p3_nu8';
+calibration_folder = 'MCDt_all_calibration_p3_nu8';
 
 deltaConstruction = 'mean_root';
 rdMethod = 'det_mean_root';
