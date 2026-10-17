@@ -15,11 +15,17 @@ function [detRoot, covMat, locVec, mdBase, X] = oneReplication(n, p, nu, alpha0,
 %   detRoot        p-th root of det(covMat * SigmaTrueInv)
 %   covMat         MCD covariance estimate for the replication
 %
-% Full call chain:
+% Full call chains:
 %   s01_mcdt_finite_sample_calibration.m
 %       -> estimateBiasDetFactors.m
 %           -> estimateOneConfiguration
 %               -> oneReplication.m
+%
+%   s01_mcdt_finite_sample_calibration.m
+%       -> runPairedFullGrid.m
+%           -> runPairedSimConfig.m
+%               -> onePairedReplication.m
+%                   -> oneReplication.m
 
 X = randn(n, p) .* sqrt(nu ./ chi2rnd(nu, n, 1));
 
