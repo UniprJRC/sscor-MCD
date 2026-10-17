@@ -94,9 +94,25 @@ T_4 = readtable(F4);
 p_F4        = 5;      % dimension
 alpha0_F4   = 0.50;   % trimming proportion
 nuFilter_F4 = 3;      % only show the nu = 3 panel
+plotMode_F4 = 'avg';  % average calibration approach adopted in Equation (21)
 
 % Plot the finite-sample calibration factor kappa_RD.
 % The 'avg' mode shows the calibration based on the average per-replication
 % quantile, which is the main quantity used in the paper.
-fh_F4 = plotKappaRDDiagnostics(T_4, p_F4, alpha0_F4, 'avg', nuFilter_F4);
+fh_F4 = plotKappaRDDiagnostics(T_4, p_F4, alpha0_F4, plotMode_F4, nuFilter_F4);
+
+%% Figure 5: size diagnostics
+
+% Load ... produced by s01.
+% This CSV contains ...
+F5  = fullfile(projectRoot, "out_article", "mcd_heavytails_RD_calibration.csv");
+T_5 = readtable(F5);
+
+p_F5        = 5;      % dimension
+alpha0_F5   = 0.50;   % trimming proportion
+nuFilter_F5 = 3;      % only show the nu = 3 panel
+method_F5   = 'det_mean_root'; % root determinant of the mean covariance matrix
+plotMode_F5 = 'avg';  % average calibration approach adopted in Equation (21)
+
+h_F5 = plotSizeDiagnostics(T_5, p_F5, alpha0_F5, method_F5, plotMode_F5, nuFilter_F5);
 
