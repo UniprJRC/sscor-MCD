@@ -17,6 +17,18 @@ In finite samples, asymptotic consistency corrections alone are insufficient: th
 ## Integration in the mcd.m function of FSDA
 The final interpolation results produced by an extended application of `s01` and `s02` are intended to support a future extension of FSDA’s `mcd.m` function. In particular, the precomputed small-sample correction factors for the MCD scatter estimator and robust-distance cutoff will be embedded into `mcd.m` as an automatic calibration layer. This would allow users to apply the finite-sample correction directly to real datasets for given `n`, `p`, `nu`, and `alpha0`. In this way, the present repository provides the empirical tables and interpolation models needed to make the corrected MCD procedure available in a standard FSDA workflow. Note that, optioanlly, `nu` will be also estimated, using the algorithm discussed in Barabesi et al. (2026).
 
+## Key Bibliography
+
+Barabesi, L., Cerioli, A., García-Escudero, L. A., Mayo-Iscar, A., Perrotta, D., & Torti, F. (2026). Robust distances and multivariate outlier detection under heavy tails. Statistics and Computing, 36, Article 89. https://doi.org/10.1007/s11222-026-10852-6
+
+Barabesi, L., Cerioli, A., García-Escudero, L. A., & Mayo-Iscar, A. (2023). Consistency factor for the MCD estimator at the Student-t distribution. Statistics and Computing, 33, Article 132. https://https://doi.org/10.1007/s11222-023-10296-2
+
+Cerioli, A., Riani, M., & Atkinson, A. C. (2009). Controlling the size of multivariate outlier tests with the MCD estimator of scatter. Statistics and Computing, 19(3), 341–353. 
+https://doi.org/10.1007/s11222-008-9096-5 
+
+Pison, G., Van Aelst, S., & Willems, G. (2002). Small sample corrections for LTS and MCD. Metrika, 55(2), 111–123. 
+https://doi.org/10.1007/s001840200191
+
 ## Key computational tasks
 
 There are two main scripts needed to replicate the simulations. 
