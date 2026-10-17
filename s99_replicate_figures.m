@@ -16,6 +16,10 @@ addpath(fullfile(projectRoot, 'src_plots'));
 
 %% Figure 1: determinant-bias diagnostics
 
+% Replicate the mean-root determinant bias diagnostic used in the paper.
+% Load the precomputed bias table, keep p = 5 and alpha0 = 0.5, and show
+% only the nu = 3 panel.
+
 % Load the calibration table for the mean-root determinant construction.
 % This file contains the finite-sample bias factor estimates used in the paper.
 F1 = fullfile(projectRoot, "out_article", "BiasDet_table_mean_root.csv");
@@ -37,15 +41,20 @@ h_F1 = plotDeterminantBiasDiagnostics( ...
 
 %% Figure 2
 
+% Placeholder for the next figure section.
+
 
 
 %% Figure 3: LOESS interpolation surface for delta_hat
+
+% Replicate the delta_hat LOESS surface from the interpolation lookup table.
+% Plot the slice for fixed p = 2 and nu = 5.
 
 % This script is an extract of function plot_loess_interpolants.m
 
 % Load the interpolation lookup table produced by s02.
 % This table stores the dense LOESS surface for delta_hat in long format.
-InterpolationRoot = fullfile(projectRoot, 'out_article');
+InterpolationRoot = fullfile(projectRoot,    'out_article');
 T_F3 = readtable(fullfile(InterpolationRoot, 'delta_loess_lookup.csv'));
 
 % Select the slice used for the figure.
@@ -53,36 +62,15 @@ T_F3 = readtable(fullfile(InterpolationRoot, 'delta_loess_lookup.csv'));
 % for fixed dimension p and degrees of freedom nu.
 pSel_F3   = 2;
 nuSel_F3  = 5;
+conflevSel_F3 = 0.50;
 
-% Keep only the rows corresponding to the chosen (p, nu) pair.
-sel = T_F3.p == pSel_F3 & T_F3.nu == nuSel_F3;
-T_F3_sel = T_F3(sel, :);
+h_F3 = plotLoessInterpolantDelta(T_F3, pSel_F3, nuSel_F3);
 
-% Rebuild the surface on the (n, alpha0) grid.
-nVals = unique(T_F3_sel.n, 'sorted');
-aVals = unique(T_F3_sel.alpha0, 'sorted');
-
-Z = nan(numel(aVals), numel(nVals));
-[~, in] = ismember(T_F3_sel.n, nVals);
-[~, ia] = ismember(T_F3_sel.alpha0, aVals);
-Z(sub2ind(size(Z), ia, in)) = T_F3_sel.loess;
-
-% Plot the LOESS surface.
-h_F3 = figure('Name', sprintf('LOESS surface for delta_hat: p=%d, nu=%d', pSel_F3, nuSel_F3));
-setfont = 20;
-
-surf(nVals, aVals, Z, 'EdgeColor', 'none')
-ax = gca;
-ax.FontSize  = 18;
-ax.LineWidth = 0.5;
-xlabel('$n$', 'Interpreter', 'latex', 'FontSize', setfont)
-ylabel('$\alpha_0$', 'Interpreter', 'latex', 'FontSize', setfont)
-zlabel('$\widehat{\delta}(n,p,\alpha_0,\nu)$ LOESS surface', ...
-    'Interpreter', 'latex', 'FontSize', setfont)
-view(45, 30)
-grid on
 
 %% Figure 4: distance-based calibration factor kappa_RD
+
+% Replicate the kappa_RD diagnostics from the calibration database.
+% Use the average calibration construction and show only the nu = 3 panel.
 
 % Load the calibration database produced by s01.
 % This CSV contains the empirical and calibrated robust-distance quantiles
@@ -101,18 +89,47 @@ plotMode_F4 = 'avg';  % average calibration approach adopted in Equation (21)
 % quantile, which is the main quantity used in the paper.
 fh_F4 = plotKappaRDDiagnostics(T_4, p_F4, alpha0_F4, plotMode_F4, nuFilter_F4);
 
-%% Figure 5: size diagnostics
+%% Figure 5: size diagnostics for the robust-distance outlier test
 
-% Load ... produced by s01.
-% This CSV contains ...
+% Replicate the empirical size diagnostics before and after calibration.
+% Use the det_mean_root method, the average calibration construction, and
+% show only the nu = 3 panel.
+
+% Load the simulation output produced by s01.
+% This table contains the empirical size of the outlier test before
+% calibration, together with the calibrated size ratios for the available
+% correction constructions.
 F5  = fullfile(projectRoot, "out_article", "mcd_heavytails_RD_calibration.csv");
 T_5 = readtable(F5);
 
+% Select the configuration shown in the paper:
 p_F5        = 5;      % dimension
 alpha0_F5   = 0.50;   % trimming proportion
 nuFilter_F5 = 3;      % only show the nu = 3 panel
 method_F5   = 'det_mean_root'; % root determinant of the mean covariance matrix
 plotMode_F5 = 'avg';  % average calibration approach adopted in Equation (21)
 
+% Plot the empirical size divided by the nominal size, before and after
+% calibration. Values near 1 indicate good finite-sample calibration.
 h_F5 = plotSizeDiagnostics(T_5, p_F5, alpha0_F5, method_F5, plotMode_F5, nuFilter_F5);
 
+%% Figure 6: LOESS interpolation surface for kappa_RD^delta
+
+% Replicate the RD LOESS surface from the interpolation lookup table.
+% Plot the slice for fixed p = 2, nu = 5, and conflev = 0.95.
+
+% This script is an extract of function plot_loess_interpolants.m
+
+% Load the interpolation lookup table produced by s02.
+% This table stores the dense LOESS surface for delta_hat in long format.
+InterpolationRoot = fullfile(projectRoot,    'out_article');
+T_F6 = readtable(fullfile(InterpolationRoot, 'RD_loess_lookup.csv'));
+
+% Select the slice used for the figure.
+% The plot shows delta_hat as a function of n and alpha0,
+% for fixed dimension p and degrees of freedom nu.
+pSel_F6   = 2;
+nuSel_F6  = 5;
+conflevSel_F6 = 0.95;
+
+h_F6 = plotLoessInterpolantRD(T_F6, pSel_F6, nuSel_F6, conflevSel_F6);

@@ -1,3 +1,5 @@
+function [hf_RD , hf_delta] = plotLoessInterpolants(pSel,nuSel,conflevSel,InterpolationRoot)
+
 %% ========================================================================
 % Plot LOESS interpolants for RD and delta
 % ========================================================================
@@ -33,8 +35,6 @@
 
 %}
 %% ========================================================================
-
-function [hf_RD , hf_delta] = plotLoessInterpolants(pSel,nuSel,conflevSel,InterpolationRoot)
 
 % Folder layout created by s02.
 rdOut    = [InterpolationRoot filesep 'RD_interpolation'];
