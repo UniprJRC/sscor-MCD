@@ -57,7 +57,8 @@ Z = nan(numel(aVals), numel(nVals));
 [~, ia] = ismember(S.alpha0, aVals);
 Z(sub2ind(size(Z), ia, in)) = S.loess;
 
-hf_RD = figure;
+hf_RD = figure('Name', sprintf('RD LOESS surface: p=%d, nu=%d, conflev=%.2f', ...
+    pSel, nuSel, conflevSel));
 setfont = 20;
 surf(nVals, aVals, Z, 'EdgeColor', 'none')
 ax = gca;
@@ -87,7 +88,8 @@ Z = nan(numel(aVals), numel(nVals));
 [~, ia] = ismember(S.alpha0, aVals);
 Z(sub2ind(size(Z), ia, in)) = S.loess;
 
-hf_delta = figure;
+hf_delta = figure('Name', sprintf('delta_hat LOESS surface: p=%d, nu=%d', ...
+    pSel, nuSel));
 setfont = 20;
 surf(nVals, aVals, Z, 'EdgeColor', 'none')
 ax = gca;
