@@ -5,7 +5,7 @@
 % Monte Carlo calibration of MCD robust-distance cutoffs under multivariate t
 %
 % Purpose:
-%   Reproduces the finite-sample calibration workflow for the MCD-t
+%   Reproduce the finite-sample calibration workflow for the MCD-t
 %   estimator described in the paper on robust covariance estimation under
 %   heavy tails.
 %
@@ -42,12 +42,11 @@
 %   - Statistics and Machine Learning Toolbox
 %
 % Notes:
-%   - The results are written under out_s1s2s3/calibration_YYYY-mm-dd_HHMMSS/
+%   - Results are written under out_s1s2s3/calibration_YYYY-mm-dd_HHMMSS/
 %   - The script uses a split-sample design:
 %       calibration replications are used to compute calibration cutoffs,
 %       evaluation replications are used only to estimate empirical size.
-%   - The script currently saves the raw database by default, but saves
-%     diagnostic plots only if options.saveDiagnostics is set to true.
+%   - Diagnostic plots are saved only if options.saveDiagnostics is set to true.
 %
 % Full call chain:
 %   s01_mcdt_finite_sample_calibration.m
@@ -63,8 +62,6 @@
 %       -> plotSizeDiagnostics
 %
 % ========================================================================
-
-
 
 clear; clc; close all   % cleaning
 
@@ -97,11 +94,11 @@ nu_vec      = [3,5,7];
 alpha0_vec  = 0.05:0.05:0.50;
 
 % Quick test override
-quickTest.n_vec      = [60:20:80];  % [50];
-quickTest.p_vec      = [2,5];  % [2,5];
-quickTest.nu_vec     = [3,5];  % [3,5,7];
-quickTest.alpha0_vec = [0.10, 0.5];  % [0.10, 0.25, 0.5];
-quickTest.B          = [20];  % 100;
+quickTest.n_vec      = [50:50:500];  % [50];
+quickTest.p_vec      = [5];  % [2,5];
+quickTest.nu_vec     = [3];  % [3,5,7];
+quickTest.alpha0_vec = [0.5];  % [0.10, 0.25, 0.5];
+quickTest.B          = [200];  % 100;
 
 % Which pooled vs. avg comparison to show in diagnostics. 
 % - 'avg' (default, Eq. 14–15) collects per-rep calibration Quantiles from 
@@ -129,30 +126,18 @@ options.saveDiagnostics = false; % save plots
 % ========================================================================
 
 % Bias-determinant correction workflow:
-%   'load'               -> load an existing correction table/interpolant
 %   'estimate'           -> estimate the correction table, save it, and stop
 %   'estimate-and-apply' -> estimate the correction table and use it immediately
-%
-biasDetMode = 'estimate-and-apply';    % 'load' | 'estimate' | 'estimate-and-apply'
-
-% Parameters used only when biasDetMode = 'load'
-BIASDET_TABLE = table();          % optional in-memory table
-BIASDET_TABLE_FILE   = '';        % optional .mat / .csv file
-BIASDET_TABLE_FOLDER = 'results_radius_xBiasDet';  % fallback folder for loading tables
-BIASDET_TABLE_MODE   = 'exact';   % 'exact' | 'interpolate'
-BIASDET_INTERP = [];              % optional interpolant object
-BIASDET_INTERP_FILE  = '';        % optional .mat file containing interpolant
-% see also biasDetOutFile below, used when biasDetMode = 'estimate' or 'estimate-and-apply'
+biasDetMode = 'estimate-and-apply';    % 'estimate' | 'estimate-and-apply'
 
 % Determinant-bias constructions to estimate.
-% 'mean_root_det' computes the mean of the per-replication determinant factors.
-% 'root_det_mean_cov' computes the determinant factor from the mean covariance.
+% 'mean_root_det'     -> mean of the per-replication determinant factors
+% 'root_det_mean_cov' -> determinant factor from the mean covariance
 BIASDET_CONSTRUCTIONS = {'mean_root_det'};   % {'mean_root_det'} | {'root_det_mean_cov'} | both
 
 % Optional verification of MD vs covariance-level correction.
-% Checks that applying the covariance-level correction yields the same
-% outlier flags as multiplying MDs (and checks numerical accuracy).
 VERIFY_BIASDET_CORRECTION = false;
+
 
 %% Add project folders to the path
 
@@ -223,43 +208,34 @@ assert(numel(RAW0.outliers)==sum(RAW0.md>cutoffT0),...
 fprintf('Sanity check passed.\n\n');
 
 %% ========================================================================
-%% Build determinant correction functions
+% Build determinant correction functions
 % ========================================================================
-% Set up the correction-factor functions used to adjust the MCD distances.
-% Depending on biasDetMode, the factors are either:
-%   - loaded from an existing table/interpolant ('load'), or
-%   - estimated from Monte Carlo and then applied ('estimate' / 'estimate-and-apply').
-% The two functions correspond to the two determinant-bias constructions:
+% Estimate the bias-determinant table first, then build the two correction
+% functions used to adjust the MCD distances:
 %   - mean_root_det
 %   - root_det_mean_cov
 
-switch biasDetMode
-    case 'load'
-        meanRootDetFactorFun = buildBiasDetFun(...
-            'table', BIASDET_TABLE, BIASDET_TABLE_FILE, BIASDET_TABLE_FOLDER, BIASDET_TABLE_MODE, ...
-            'mean_root_det', BIASDET_INTERP, BIASDET_INTERP_FILE);
-        rootDetMeanCovFactorFun = buildBiasDetFun(...
-            'table', BIASDET_TABLE, BIASDET_TABLE_FILE, BIASDET_TABLE_FOLDER, BIASDET_TABLE_MODE, ...
-            'root_det_mean_cov', BIASDET_INTERP, BIASDET_INTERP_FILE);
+fprintf('Estimating BiasDet table (this may be expensive)...\n');
 
-    case {'estimate','estimate-and-apply'}
-        fprintf('Estimating BiasDet table (this may be expensive)...\n');
-        BiasDetTable = estimateBiasDetFactors(n_vec, p_vec, nu_vec, alpha0_vec, B, ...
-            useParfor, biasDetOutFile, conflev);
-        save(biasDetOutFile, 'BiasDetTable');
-        fprintf('BiasDet table saved to %s\n', biasDetOutFile);
+BiasDetTable = estimateBiasDetFactors( ...
+    n_vec, p_vec, nu_vec, alpha0_vec, B, ...
+    useParfor, biasDetOutFile, conflev);
 
-        meanRootDetFactorFun    = buildBiasDetFun('table', BiasDetTable, '', '', 'exact', 'mean_root_det', [], '');
-        rootDetMeanCovFactorFun = buildBiasDetFun('table', BiasDetTable, '', '', 'exact', 'root_det_mean_cov', [], '');
+save(biasDetOutFile, 'BiasDetTable');
+fprintf('BiasDet table saved to %s\n', biasDetOutFile);
 
-        if strcmp(biasDetMode,'estimate')
-            fprintf('BiasDet estimation complete. Re-run with biasDetMode=''load'' to apply corrections.\n');
-            return
-        end
+meanRootDetFactorFun = buildBiasDetFun( ...
+    'table', BiasDetTable, '', '', 'exact', 'mean_root_det', [], '');
 
-    otherwise
-        error('Unknown biasDetMode: %s', biasDetMode);
+rootDetMeanCovFactorFun = buildBiasDetFun( ...
+    'table', BiasDetTable, '', '', 'exact', 'root_det_mean_cov', [], '');
+
+if strcmp(biasDetMode, 'estimate')
+    fprintf(['BiasDet estimation complete. ' ...
+        'Re-run with biasDetMode=''estimate-and-apply'' to apply corrections.\n']);
+    return
 end
+
 
 %% ========================================================================
 % RUN MONTE CARLO SIMULATION
@@ -280,6 +256,8 @@ end
 %   - collects the baseline and calibrated empirical sizes.
 %
 
+fprintf('Applying BiasDet corrections and running the Monte Carlo grid...\n');
+
 [ResultsBaseline, ResultsDetMeanRoot, ResultsDetRootMeanCov] = ...
     runPairedFullGrid(...
         n_vec,...
@@ -293,6 +271,9 @@ end
         useParfor,...
         VERIFY_BIASDET_CORRECTION,...
         q_method);
+
+fprintf('Monte Carlo grid completed.\n');
+
 disp(ResultsBaseline);
 disp(ResultsDetMeanRoot);
 disp(ResultsDetRootMeanCov);
