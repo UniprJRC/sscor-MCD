@@ -14,12 +14,16 @@ This paper investigates the finite-sample behaviour of the MCD estimator and of 
 
 In finite samples, asymptotic consistency corrections alone are insufficient: they underestimate scatter and render standard outlier tests overly liberal, resulting in substantial rates of false alarms on heavy-tailed data. To solve this, this repository delivers practical finite-sample tools that (i) remove the systematic bias in the MCD scatter matrix via determinant-based correction factors $\hat{\delta}_n$, and (ii) provide calibrated cutoffs for squared robust distances that strictly control the empirical false-positive rate. Through precomputed calibration tables and smooth interpolation functions, practitioners can instantly apply accurate corrections to any combination of sample size $n$, dimension $p$, degrees of freedom $\nu$, and trimming proportion $\alpha_0$ in real-time, eliminating the need for expensive simulation studies.
 
+## Integration in the mcd.m function of FSDA
+The final interpolation results produced by an extended application of `s01` and `s02` are intended to support a future extension of FSDA’s `mcd.m` function. In particular, the precomputed small-sample correction factors for the MCD scatter estimator and robust-distance cutoff will be embedded into `mcd.m` as an automatic calibration layer. This would allow users to apply the finite-sample correction directly to real datasets for given `n`, `p`, `nu`, and `alpha0`. In this way, the present repository provides the empirical tables and interpolation models needed to make the corrected MCD procedure available in a standard FSDA workflow. Note that, optioanlly, `nu` will be also estimated, using the algorithm discussed in Barabesi et al. (2026).
+
 ## Key computational tasks
 
 There are two main scripts needed to replicate the simulations. 
 
--  s01_mcdt_finite_sample_calibration.m runs the Monte Carlo simulation, estimates the determinant-bias corrections, calibrates the MCD robust-distance cutoff, evaluates empirical size, and writes the main calibration database. The script explicitly documents this simulation/calibration role and its split between calibration and independent evaluation samples.
--  s02_mcdt_interpolation_analysis.m consumes the simulation results and performs the interpolation/approximation analysis for both $\hat\delta$ and $\kappa_{RD}^{\delta}$. In doing so, it compares three interpolation methods. 
+-  `s01_mcdt_finite_sample_calibration.m` runs the Monte Carlo simulation, estimates the determinant-bias corrections, calibrates the MCD robust-distance cutoff, evaluates empirical size, and writes the main calibration database. The script explicitly documents this simulation/calibration role and its split between calibration and independent evaluation samples.
+-  `s02_mcdt_interpolation_analysis.m` consumes the simulation results and performs the interpolation/approximation analysis for both $\hat\delta$ and $\kappa_{RD}^{\delta}$. In doing so, it compares three interpolation methods. 
+- `s99_replicate_figures.m` reproduces all figures from the saved outputs, including the application example.
 
 ## FSDA and other dependencies
 
@@ -130,6 +134,24 @@ Expected output is a robust-distance index plot showing:
 - A scatterplot matrix (spmplot) with the same grouping.
 The output is primarily visual but the MATLAB Command Output reports relevant statistics.
 
+
+## s99_replicate_figures.m
+
+This script reproduces all figures in the paper and supplementary material from the precomputed outputs produced by `s01`, `s02`, and `s03`.
+
+Main inputs:
+- calibration outputs from `s01_mcdt_finite_sample_calibration.m`
+- interpolation outputs from `s02_mcdt_interpolation_analysis.m`
+- application outputs and plotting helpers used by `s03_application.m`
+
+The script:
+- loads the saved tables and lookup data;
+- calls the plotting functions used throughout the project;
+- reproduces the main paper figures and appendix figures in a single run.
+
+This is the recommended entry point when the goal is figure replication only, without rerunning the Monte Carlo simulations.
+
+
 ### Reproducibility workflow summary
 
 1. Run `s01_mcdt_finite_sample_calibration.m`.
@@ -151,3 +173,5 @@ The output is primarily visual but the MATLAB Command Output reports relevant st
    - Evaluate the interpolated `delta_hat` and `kappa_RD^delta`, then use them to calibrate the MCD robust-distance cutoff.
    - This is the practical step that makes the calibration usable in real applications, where the final sample size, dimension, tail parameter, and trimming level are not known in advance.
    - If the requested configuration lies outside the supported range, extend the grid and rerun `s01` and `s02`.
+
+5. To reproduce all figures directly from the saved outputs, run `s99_replicate_figures.m`.
