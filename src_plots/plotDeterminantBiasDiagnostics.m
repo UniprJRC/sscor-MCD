@@ -23,9 +23,11 @@ if nargin < 5
     nuFilter = [];
 end
 
+% These two lines turn the second curve on or off safely. If the table is
+% missing or incomplete, the function still plots T_mean_root and skips the
+% root_mean_cov series instead of erroring.
 hasRootMeanCov = istable(T_root_mean_cov) && ~isempty(T_root_mean_cov) && ...
     all(ismember({'p', 'alpha0', 'nu', 'n', 'BiasDet'}, T_root_mean_cov.Properties.VariableNames));
-
 plot_det_root_mean_cov = hasRootMeanCov;
 
 set(groot, 'defaultTextInterpreter', 'latex');

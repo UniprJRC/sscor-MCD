@@ -119,7 +119,7 @@ q_method             = 'inclusive'; % 'inclusive' | 'exclusive' | 'midpoint' | '
 
 % Workflow options
 options.saveRawDatabase = true;  % save 
-options.saveDiagnostics = false; % save plots
+options.saveDiagnostics = true; % save plots
 
 %% ========================================================================
 % BIAS_DET SETTINGS
@@ -363,8 +363,11 @@ if options.saveDiagnostics
     fh1 = plotKappaRDDiagnostics(CalibrationDatabase, p_vec(1), alpha0_vec(1), plotPooledComparison);
 
     % Section 4.1 & 4.2: determinant-bias diagnostics (plotMode supported but determinant plots unaffected)
-    fh2 = plotDeterminantBiasDiagnostics(BiasDetTable.mean_root, BiasDetTable.root_mean_cov, ...
+    fh2 = plotDeterminantBiasDiagnostics(BiasDetTable.mean_root, [], ...
         p_vec(1), alpha0_vec(1));
+    % The line below would plot also the root_mean_cov line
+    %fh2 = plotDeterminantBiasDiagnostics(BiasDetTable.mean_root, BiasDetTable.root_mean_cov, ...
+    %    p_vec(1), alpha0_vec(1));
 
     % Outlier-test size before/after calibration for the chosen correction method.
     % use CalibrationDatabase (contains emp_size_pooled / sizeRatio_calibrated_pooled)
