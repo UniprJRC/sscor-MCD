@@ -36,13 +36,19 @@ nuFilter_F1 = 3;     % only show the nu = 3 panel
 
 % Plot the finite-sample determinant bias and its inverse correction factor.
 h_F1 = plotDeterminantBiasDiagnostics( ...
-       T_mean_root, T_root_mean_cov, p_F1, alpha0_F1, nuFilter_F1);
+    T_mean_root, T_root_mean_cov, p_F1, alpha0_F1, nuFilter_F1);
 
 
 %% Figure 2
 
-% Placeholder for the next figure section.
+p  = 5;
+nu = [3  10];
+alpha0Min = 0.05;
+alpha0Max = 0.50;
+savein = false;
 
+csvFile = "out_article/BiasDet_table_mean_root_FT.csv";
+fh = plotResidualDeterminantBias(csvFile, p, nu, alpha0Min, alpha0Max, savein);
 
 
 %% Figure 3: LOESS interpolation surface for delta_hat
