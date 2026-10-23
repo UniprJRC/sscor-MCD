@@ -47,7 +47,8 @@ alpha0Min = 0.05;
 alpha0Max = 0.50;
 savein = false;
 
-csvFile = "out_article/BiasDet_table_mean_root_FT.csv";
+%csvFile = "out_article/BiasDet_table_mean_root_FT.csv";
+csvFile = "out_article/BiasDet_table_mean_root.csv";
 fh = plotResidualDeterminantBias(csvFile, p, nu, alpha0Min, alpha0Max, savein);
 
 
@@ -154,6 +155,11 @@ s03_application;
 %                     calibration table
 % Both figures use the same plotting settings; only the calibration table
 % changes.
+p_F5        = 5;      % dimension
+alpha0_F5   = 0.50;   % trimming proportion
+nuFilter_F5 = 3;      % only show the nu = 3 panel
+method_F5   = 'det_mean_root'; % root determinant of the mean covariance matrix
+plotMode_F5 = 'avg';  % average calibration approach adopted in Equation (21)
 
 % Calibration table computed with the 'inclusive' convention.
 F5  = fullfile(projectRoot, "out_article", "mcd_heavytails_RD_calibration.csv");
