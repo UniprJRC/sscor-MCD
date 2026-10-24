@@ -74,7 +74,7 @@ projectRoot = '.';   % Your project folder (codes run here)
 % =========================================================================
 
 % Monte Carlo replications with calibration / evaluation split
-B = 20;    
+B = 2000;    
 if mod(B,2) ~= 0
     error('For the split-sample calibration diagnostics, B must be even. Current B = %d.', B);
 end
@@ -94,11 +94,11 @@ nu_vec      = [3,5,7];
 alpha0_vec  = 0.05:0.05:0.50;
 
 % Quick test override
-quickTest.n_vec      = [50:10:500];  % [50];
-quickTest.p_vec      = [5];  % [2,5];
-quickTest.nu_vec     = [3];  % [3,5,7];
-quickTest.alpha0_vec = [0.5];  % [0.10, 0.25, 0.5];
-quickTest.B          = [200];  % 100;
+quickTest.n_vec      = [];  % [50];
+quickTest.p_vec      = [];  % [2,5];
+quickTest.nu_vec     = [];  % [3,5,7];
+quickTest.alpha0_vec = [];  % [0.10, 0.25, 0.5];
+quickTest.B          = [];  % 100;
 
 % Which pooled vs. avg comparison to show in diagnostics. 
 % - 'avg' (default, Eq. 14–15) collects per-rep calibration Quantiles from 

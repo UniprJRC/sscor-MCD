@@ -77,7 +77,7 @@ projectRoot = '.'; % Project folder
 % =========================================================================
 
 calibration_folder = 'MCDt_all_calibration_p3_nu8';
-calibration_folder = 'MCDt_all_calibration_final';
+% calibration_folder = 'MCDt_all_calibration_final';
 
 deltaConstruction = 'mean_root';
 rdMethod = 'det_mean_root';

@@ -2,17 +2,51 @@
 % s99_replicate_figures.m
 % ========================================================================
 %
-% Replication script for all figures in the paper.
-% Each section of the script corresponds to one figure or figure panel and
-% reads the precomputed calibration, interpolation, or application data
-% produced by the earlier scripts.
+% Replicates the figures of the paper from the precomputed CSV tables saved
+% in out_article/. The script is organized by figure; each section loads the
+% corresponding calibration, interpolation, or application data and calls
+% the matching plotting routine.
+%
+% Two simulation grids were used to generate the precomputed tables:
+%   - dense:  
+%       n = 50:10:500
+%       p = [2 3 4 5 6 7 8]
+%       nu = [3 4 5 6 7 8 9 10 15 20 30],
+%       alpha0 = [0.05 0.10 0.15 0.20 0.25 0.30 0.35 0.40 0.45 0.50]
+%   - light:
+%       n = 50:10:500
+%       p = [2 5]
+%       nu = [3 5 7],
+%       alpha0 = [0.05 0.10 0.15 0.20 0.25 0.30 0.35 0.40 0.45 0.50]
+%
+% The global setting simulationGrid selects which set of precomputed tables
+% is loaded. A few figures are intentionally hardcoded to the light tables
+% because the article refers to that configuration.
+
 
 clear all; close all; clc;
+
+% Select which simulation grid was used to generate the precomputed tables.
+% "dense"  -> files prefixed with "Dense_"
+% "light"  -> files prefixed with "Light_"
+simulationGrid = "light";   % "dense" or "light"
 
 projectRoot = '.';
 addpath(fullfile(projectRoot, 'src_srep'));
 addpath(fullfile(projectRoot, 'src_core'));
 addpath(fullfile(projectRoot, 'src_plots'));
+
+switch lower(simulationGrid)
+    case "dense"
+        lightPrefix = "";
+    case "light"
+        lightPrefix = "Light_";
+    otherwise
+        error('Unknown simulation grid "%s". Use "dense" or "light".', simulationGrid);
+end
+
+articleRoot = fullfile(projectRoot, "out_article");
+articleFile = @(name) fullfile(articleRoot, lightPrefix + name);
 
 %% Figure 1: determinant-bias diagnostics
 
@@ -22,7 +56,8 @@ addpath(fullfile(projectRoot, 'src_plots'));
 
 % Load the calibration table for the mean-root determinant construction.
 % This file contains the finite-sample bias factor estimates used in the paper.
-F1 = fullfile(projectRoot, "out_article", "BiasDet_table_mean_root.csv");
+F1 = articleFile("BiasDet_table_mean_root.csv");
+
 T_mean_root = readtable(F1);
 
 % The alternative root of the determinant of the mean covariance is not of
@@ -47,8 +82,8 @@ alpha0Min = 0.05;
 alpha0Max = 0.50;
 savein = false;
 
-%csvFile = "out_article/BiasDet_table_mean_root_FT.csv";
-csvFile = "out_article/BiasDet_table_mean_root.csv";
+% Intentional: Figure 2 is only defined for the light-grid tables.
+csvFile = "out_article/Light_BiasDet_table_mean_root_FT.csv";
 fh = plotResidualDeterminantBias(csvFile, p, nu, alpha0Min, alpha0Max, savein);
 
 
@@ -61,8 +96,7 @@ fh = plotResidualDeterminantBias(csvFile, p, nu, alpha0Min, alpha0Max, savein);
 
 % Load the interpolation lookup table produced by s02.
 % This table stores the dense LOESS surface for delta_hat in long format.
-InterpolationRoot = fullfile(projectRoot,    'out_article');
-T_F3 = readtable(fullfile(InterpolationRoot, 'delta_loess_lookup.csv'));
+T_F3 = readtable(articleFile("delta_loess_lookup.csv"));
 
 % Select the slice used for the figure.
 % The plot shows delta_hat as a function of n and alpha0,
@@ -83,7 +117,7 @@ h_F3 = plotLoessInterpolantDelta(T_F3, pSel_F3, nuSel_F3);
 % Load the calibration database produced by s01.
 % This CSV contains the empirical and calibrated robust-distance quantiles
 % used to compute kappa_RD under the multivariate t model.
-F4  = fullfile(projectRoot, "out_article", "mcd_heavytails_RD_calibration.csv");
+F4  = articleFile("mcd_heavytails_RD_calibration.csv");
 T_4 = readtable(F4);
 
 % Select the configuration used for the figure
@@ -107,7 +141,7 @@ fh_F4 = plotKappaRDDiagnostics(T_4, p_F4, alpha0_F4, plotMode_F4, nuFilter_F4);
 % This table contains the empirical size of the outlier test before
 % calibration, together with the calibrated size ratios for the available
 % correction constructions.
-F5  = fullfile(projectRoot, "out_article", "mcd_heavytails_RD_calibration.csv");
+F5  = articleFile("mcd_heavytails_RD_calibration.csv");
 T_5 = readtable(F5);
 
 % Select the configuration shown in the paper:
@@ -130,8 +164,7 @@ h_F5 = plotSizeDiagnostics(T_5, p_F5, alpha0_F5, method_F5, plotMode_F5, nuFilte
 
 % Load the interpolation lookup table produced by s02.
 % This table stores the dense LOESS surface for delta_hat in long format.
-InterpolationRoot = fullfile(projectRoot,    'out_article');
-T_F6 = readtable(fullfile(InterpolationRoot, 'RD_loess_lookup.csv'));
+T_F6 = readtable(articleFile("RD_loess_lookup.csv"));
 
 % Select the slice used for the figure.
 % The plot shows delta_hat as a function of n and alpha0,
@@ -161,12 +194,13 @@ nuFilter_F5 = 3;      % only show the nu = 3 panel
 method_F5   = 'det_mean_root'; % root determinant of the mean covariance matrix
 plotMode_F5 = 'avg';  % average calibration approach adopted in Equation (21)
 
+% Intentional: Figure B1 is only defined for the light-grid tables.
 % Calibration table computed with the 'inclusive' convention.
-F5  = fullfile(projectRoot, "out_article", "mcd_heavytails_RD_calibration.csv");
+F5  = fullfile(projectRoot, "out_article", "Light_mcd_heavytails_RD_calibration.csv");
 T_5 = readtable(F5);
 
 % Calibration table computed with the 'midpoint' convention.
-FB1m  = fullfile(projectRoot, "out_article", "mcd_heavytails_RD_calibration_midpoint.csv");
+FB1m  = fullfile(projectRoot, "out_article", "Light_mcd_heavytails_RD_calibration_midpoint.csv");
 T_B1m = readtable(FB1m);
 
 % Plot the baseline Figure 5 version.
@@ -183,7 +217,7 @@ h_B1m = plotSizeDiagnostics(T_B1m, p_F5, alpha0_F5, method_F5, plotMode_F5, nuFi
 % unchanged.
 
 % Reuse the inclusive calibration table from the main paper.
-F_B2 = fullfile(projectRoot, "out_article", "mcd_heavytails_RD_calibration.csv");
+F_B2 = articleFile("mcd_heavytails_RD_calibration.csv");
 T_B2 = readtable(F_B2);
 
 % Same configuration as Figure 5.

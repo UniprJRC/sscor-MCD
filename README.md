@@ -187,3 +187,20 @@ This is the recommended entry point when the goal is figure replication only, wi
    - If the requested configuration lies outside the supported range, extend the grid and rerun `s01` and `s02`.
 
 5. To reproduce all figures directly from the saved outputs, run `s99_replicate_figures.m`.
+
+### Remark on the simulation setting
+
+We ran two simulation campaigns: a dense grid and a light grid. The dense grid was used to explore the parameter space more finely, while the light grid used a smaller but representative set of settings to reduce computation time and support the figures that only require a few key cases. 
+
+Dense grid:
+- n = 50:10:500
+- p = [2 3 4 5 6 7 8]
+- nu = [3 4 5 6 7 8 9 10 15 20 30]
+- alpha0 = [0.05 0.10 0.15 0.20 0.25 0.30 0.35 0.40 0.45 0.50]
+
+Light grid:
+- n = 50:10:500
+- p = [2 5]
+- nu = [3 5 7]
+- alpha0 = [0.05 0.10 0.15 0.20 0.25 0.30 0.35 0.40 0.45 0.50]
+
