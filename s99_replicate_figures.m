@@ -1,7 +1,7 @@
 %% ========================================================================
 % s99_replicate_figures.m
 % ========================================================================
-%
+% 
 % Replicates the figures of the paper from the precomputed CSV tables saved
 % in out_article/. The script is organized by figure; each section loads the
 % corresponding calibration, interpolation, or application data and calls
