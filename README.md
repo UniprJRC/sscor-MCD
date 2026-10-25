@@ -188,7 +188,7 @@ This is the recommended entry point when the goal is figure replication only, wi
 
 5. To reproduce all figures directly from the saved outputs, run `s99_replicate_figures.m`.
 
-### Remark on the simulation setting
+## Simulation setting summary
 
 We ran two simulation campaigns: a dense grid and a light grid. The dense grid was used to explore the parameter space more finely, while the light grid used a smaller but representative set of settings to reduce computation time and support the figures that only require a few key cases. 
 
